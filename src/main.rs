@@ -1,5 +1,8 @@
 use clap::Parser;
-use rcli::{Opts, SubCommand, process_csv, process_genpass};
+use rcli::{
+    Base64SubCommand, Opts, SubCommand, process_csv, process_decode, process_encode,
+    process_genpass,
+};
 use zxcvbn::zxcvbn;
 
 fn main() -> anyhow::Result<()> {
@@ -25,6 +28,14 @@ fn main() -> anyhow::Result<()> {
             let estimate = zxcvbn(&password, &[]);
             eprintln!("Password strength: {}", estimate.score());
         }
+        SubCommand::Base64(cmd) => match cmd {
+            Base64SubCommand::Encode(opts) => {
+                process_encode(&opts.input, opts.format)?;
+            }
+            Base64SubCommand::Decode(opts) => {
+                process_decode(&opts.input, opts.format)?;
+            }
+        },
     }
     Ok(())
 }

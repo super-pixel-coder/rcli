@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0.102"
+axum = { version = "0.8.9", features = ["http2", "query", "tracing"] }
 base64 = "0.22.1"
 blake3 = "1.8.5"
 clap = { version = "4.6.1", features = ["derive"] }
@@ -17,5 +18,8 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 serde_yaml = "0.9.34"
+tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread", "net", "fs", "tokio-macros"] }
 toml = "1.1.2"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 zxcvbn = "3.1.1"

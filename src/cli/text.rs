@@ -1,10 +1,16 @@
 use std::path::PathBuf;
 
 use clap::Parser;
+use enum_dispatch::enum_dispatch;
 
-use crate::cli::{verify_file, verify_path};
+use crate::{
+    CmdExecutor,
+    cli::{verify_file, verify_path},
+    process_text_generate, process_text_sign, process_text_verify,
+};
 
 #[derive(Debug, Parser)]
+#[enum_dispatch(CmdExecutor)]
 pub enum TextSubCommand {
     #[command(name = "sign", about = "Sign a message with a private/shared key")]
     Sign(TextSignOpts),
@@ -24,6 +30,14 @@ pub struct TextSignOpts {
     pub format: TextSignFormat,
 }
 
+impl CmdExecutor for TextSignOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let signed = process_text_sign(&self.input, &self.key, self.format)?;
+        println!("{}", signed);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Parser)]
 pub struct TextVerifyOpts {
     #[arg(short, long, value_parser = verify_file, default_value = "-")]
@@ -36,12 +50,38 @@ pub struct TextVerifyOpts {
     pub sig: String,
 }
 
+impl CmdExecutor for TextVerifyOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let verified = process_text_verify(&self.input, &self.key, self.format, &self.sig)?;
+        println!("{}", verified);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Parser)]
 pub struct TextKeyGenerateOpts {
     #[arg(short, long, default_value = "blake3", value_parser = parse_format)]
     pub format: TextSignFormat,
     #[arg(short, long, value_parser = verify_path)]
     pub output: PathBuf,
+}
+
+impl CmdExecutor for TextKeyGenerateOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let key = process_text_generate(self.format)?;
+        match self.format {
+            TextSignFormat::Blake3 => {
+                let name = self.output.join("blake3.txt");
+                std::fs::write(name, &key[0])?;
+            }
+            TextSignFormat::Ed25519 => {
+                let name = &self.output;
+                std::fs::write(name.join("ed25519.sk"), &key[0])?;
+                std::fs::write(name.join("ed25519.pk"), &key[1])?;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -4,13 +4,9 @@ mod genpass;
 mod http;
 mod text;
 
-pub use self::base64::{Base64Format, Base64SubCommand};
-use self::csv::CsvOpts;
-pub use self::csv::OutputFormat;
-pub use crate::cli::text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
+pub use self::{base64::*, csv::*, genpass::*, http::*, text::*};
 use clap::Parser;
-use genpass::GenPassOpts;
-pub use http::{HttpServeOpts, HttpSubCommand};
+use enum_dispatch::enum_dispatch;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Parser)]
@@ -21,16 +17,17 @@ pub struct Opts {
 }
 
 #[derive(Debug, Parser)]
+#[enum_dispatch(CmdExecutor)]
 pub enum SubCommand {
     #[command(name = "csv", about = "Show CSV or Convert CSV to other formats")]
     Csv(CsvOpts),
     #[command(name = "genpass", about = "Generate a random password")]
     GenPass(GenPassOpts),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Base64 encode/decode")]
     Base64(Base64SubCommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Text sign/verify")]
     Text(TextSubCommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Http Server")]
     Http(HttpSubCommand),
 }
 

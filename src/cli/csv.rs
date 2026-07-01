@@ -1,3 +1,5 @@
+use crate::{CmdExecutor, process_csv};
+
 use super::verify_file;
 use clap::Parser;
 
@@ -13,6 +15,18 @@ pub struct CsvOpts {
     pub delimiter: char,
     #[arg(long, default_value_t = true)]
     header: bool,
+}
+
+impl CmdExecutor for CsvOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let output = if let Some(output) = self.output {
+            output
+        } else {
+            format!("output.{}", self.format)
+        };
+        process_csv(&self.input, output, self.format)?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

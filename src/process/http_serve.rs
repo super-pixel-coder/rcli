@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     routing::get,
 };
+use tower_http::services::ServeDir;
 use tracing::info;
 
 #[derive(Debug)]
@@ -16,10 +17,12 @@ pub async fn process_http_serve(dir: PathBuf, port: u16) -> anyhow::Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("Serving {:?} on port {}", dir, addr);
 
-    let state = HttpServeState { dir };
+    let state = HttpServeState { dir: dir.clone() };
+
     // axum router
     let router = axum::Router::new()
         .route("/{*path}", get(file_handler))
+        .nest_service("/tower", ServeDir::new(dir))
         .with_state(Arc::new(state));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
